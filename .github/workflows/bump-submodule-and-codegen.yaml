@@ -1,0 +1,62 @@
+name: Bump submodule and codegen
+on:
+  workflow_dispatch:
+    inputs:
+      commit-id:
+        description: |
+          Commit ID of the submodule.
+          If ommited, HEAD will be used.
+        required: false
+        type: string
+  repository_dispatch:
+    types: [biome-push-on-main-event]
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+
+env:
+  RUST_LOG: info
+  RUST_BACKTRACE: 1
+
+jobs:
+  bump-submodule-and-codegen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        with:
+          submodules: true
+      - name: Get commit ID of submodule (workflow dispatch, empty)
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.commit-id == '' }}
+        run: |
+          cd biome
+          echo "COMMIT_ID=$(git ls-remote origin main)" >> $GITHUB_ENV
+      - name: Get commit ID of submodule (workflow dispatch, non-empty)
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.commit-id != '' }}
+        run: echo "COMMIT_ID=${{ github.event.inputs.commit-id }}" >> $GITHUB_ENV
+      - name: Get commit ID of submodule (repository dispatch)
+        if: ${{ github.event_name == 'repository_dispatch'}}
+        run: echo "COMMIT_ID=${{ github.event.client_payload.event.head_commit.id }}" >> "$GITHUB_ENV"
+      - name: Get short commit ID
+        run: echo "SHORT_COMMIT_ID=$(echo ${{ env.COMMIT_ID }} | cut -c 1-7)" >> "$GITHUB_ENV"
+      - name: Checkout submodule to the commit ID
+        run: |
+          cd biome
+          git fetch origin --unshallow
+          git checkout ${{ env.COMMIT_ID }}
+      - name: Install rust toolchain
+        uses: moonrepo/setup-rust@b8edcc56aab474d90c7cf0bb8beeaf8334c15e9f # v1
+      - name: Update generated files
+        run: cargo run --manifest-path codegen/Cargo.toml rules
+      - name: Create pull request
+        id: create-pull-request
+        uses: peter-evans/create-pull-request@70a41aba780001da0a30141984ae2a0c95d8704e # v6
+        with:
+          branch: "chore/bump-submodule-and-codegen"
+          author: "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+          title: "chore(ci): bump submodule to `${{ env.SHORT_COMMIT_ID }}` and codegen"
+          commit-message: "chore(ci): bump submodule to `${{ env.SHORT_COMMIT_ID }}` and codegen"
+          body: "Bump submodule to [`${{ env.SHORT_COMMIT_ID }}`](https://github.com/biomejs/biome/commit/${{ env.COMMIT_ID }}) and codegen."
+          labels: CI-Bump-Submodule
