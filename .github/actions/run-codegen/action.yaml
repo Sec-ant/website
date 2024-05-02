@@ -10,6 +10,7 @@ runs:
       uses: EndBug/version-check@d4be4219408b50d1bbbfd350a47cbcb126878692 # v2.1.4
       with:
         file-name: ./biome/packages/@biomejs/biome/package.json
+        static-checking: localIsNew
     - name: Codegen rules
       if: ${{ steps.check-new-version.outputs.changed == 'false' }}
       shell: bash
