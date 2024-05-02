@@ -1,4 +1,4 @@
-// Run `BIOME_VERSION=<version number> cargo codegen-website
+// Run `BIOME_VERSION=<version number> pnpm codegen:release-files
 // to generate a new schema
 export function GET() {
 	const schema = {

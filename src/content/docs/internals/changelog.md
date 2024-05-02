@@ -15,25 +15,6 @@ New entries must be placed in a section entitled `Unreleased`.
 Read
 our [guidelines for writing a good changelog entry](https://github.com/biomejs/biome/blob/main/CONTRIBUTING.md#changelog).
 
-## Unreleased
-
-### Analyzer
-
-### CLI
-
-### Configuration
-
-### Editors
-
-### Formatter
-
-### JavaScript APIs
-
-### Linter
-
-### Parser
-
-
 ## 1.7.2 (2024-04-30)
 
 ### Analyzer
